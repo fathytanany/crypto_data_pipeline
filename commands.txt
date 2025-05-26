@@ -1,0 +1,1 @@
+docker-compose run airflow-webserver airflow users create     --username airflow     --firstname Fathy     --lastname Eltanany     --role Admin     --email example@example.com     --password airflow

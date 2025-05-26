@@ -1,0 +1,5 @@
+boto3
+requests
+apache-airflow==2.8.1
+redshift_connector
+pandas
