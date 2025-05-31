@@ -14,11 +14,11 @@ This project builds a crypto data pipeline using Airflow, AWS S3, and Amazon Red
 1. Create `.env` file with your credentials
 2. Run with Docker Compose:
 ```bash
-docker-compose up airflow airflow_scheduler
+docker-compose up --build
 ```
 3. Open Airflow UI at `http://localhost:8080`
 
-## DAG: `crypto_pipeline_s3_redshift`
+## DAG: `pipeline_dag`
 - five minutes schedule
 - Monitors and logs each step
 

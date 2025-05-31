@@ -1,5 +1,5 @@
+apache-airflow==2.9.0
 boto3
-requests
-apache-airflow==2.8.1
-redshift_connector
 pandas
+redshift-connector
+requests
