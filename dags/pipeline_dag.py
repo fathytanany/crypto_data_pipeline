@@ -17,10 +17,10 @@ default_args = {
 }
 
 with DAG(
-    dag_id='crypto_pipeline_s3',
+    dag_id='crypto_pipleline',
     default_args=default_args,
     start_date=datetime(2024, 1, 1),
-    schedule_interval='*/5 * * * *',  # Every 5 minutes
+    # schedule_interval='*/5 * * * *',  # Every 5 minutes
     catchup=False,
     tags=['crypto', 's3']
 ) as dag:
