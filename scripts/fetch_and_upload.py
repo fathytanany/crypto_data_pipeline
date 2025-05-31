@@ -5,7 +5,7 @@ from io import BytesIO
 import os
 import redshift_connector
 import logging
-
+# TODO: Remove top level code because it get executed every time the module is imported
 S3_BUCKET = os.getenv("S3_BUCKET")
 RAW_FOLDER = "crypto-data/raw"
 TRANSFORMED_FOLDER = "crypto-data/processed"
@@ -28,18 +28,24 @@ s3 = boto3.client(
     )
 
 def fetch_and_store_to_s3(**kwargs):
+    # TODO: Add Prameters to the function to make it more generic
+    # URL, Timestamp, etc.
     url = "https://api.coingecko.com/api/v3/coins/markets"
     params = {"vs_currency": "usd", "ids": "bitcoin,ethereum"}
     response = requests.get(url, params=params)
     data = response.json()
-
+    # TODO: This function should end with a return data
+    # TODO: Use XCOM to pass data between tasks in Airflow
     file_key = f"{RAW_FOLDER}/data_{kwargs['timestamp']}.json"
     print("file_key",file_key)
+    # TODO: Remove Print statements, Replace with logging.
     s3.put_object(Bucket=S3_BUCKET, Key=file_key, Body=json.dumps(data))
 
     print("Successfully uploaded to S3.")
 
 def transform_and_store_to_redshift(**kwargs):
+    # TODO: Add Parameters to the function to make it more generic
+    # TODO: split the function into smaller functions
     raw_file = f"{RAW_FOLDER}/data_{kwargs['timestamp']}.json"
     print("raw_file",raw_file)
     obj = s3.get_object(Bucket=S3_BUCKET, Key=raw_file)
@@ -63,7 +69,7 @@ def transform_and_store_to_redshift(**kwargs):
         password=os.getenv("DB_PASSWORD")
     )
     cursor = conn.cursor()
-
+    # TODO: ADD the sql script into utils folder
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS crypto_prices (
             id VARCHAR(50),
