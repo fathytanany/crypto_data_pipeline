@@ -14,19 +14,19 @@ sys.path.append(os.path.dirname(CURRENT_DIR))
 from utils.operation_utils import boto_client
 
 
-def fetch_data(**kwargs):
+def fetch_data(ti, **kwargs):
     url = kwargs['API_url']
     params = kwargs['API_params']
     response = requests.get(url, params=params)
     response.raise_for_status()
     data = response.json()
-    kwargs['ti'].xcom_push(key='fetched_data', value=data)
+    ti.xcom_push(key='fetched_data', value=data)
 
 def store_data_to_s3(**kwargs):
     timestamp = kwargs['ts']
     ti = kwargs['ti']
     data = ti.xcom_pull(task_ids='fetch_data', key='fetched_data')
-    raw_key = f"{os.getenv('RAW_FOLDER')}/crypto_data_{timestamp}.json"
+    raw_key = f"{os.getenv('RAW_FOLDER')}/{timestamp}/raw_data.json"
 
     s3 = boto_client('s3')
     s3.put_object(Bucket=os.getenv("S3_BUCKET"), Key=raw_key, Body=json.dumps(data))
@@ -49,7 +49,7 @@ def store_transformed_to_s3(**kwargs):
     ti = kwargs['ti']
     data = json.loads(ti.xcom_pull(task_ids='transform_data', key='cleaned_data'))
     df_clean = pd.DataFrame(data)
-    transformed_key = f"{os.getenv('TRANSFORMED_FOLDER')}/crypto_data_cleaned_{timestamp}.csv"
+    transformed_key = f"{os.getenv('TRANSFORMED_FOLDER')}/{timestamp}/data.csv"
 
     csv_buffer = BytesIO()
     df_clean.to_csv(csv_buffer, index=False)
@@ -71,7 +71,8 @@ def run_sql_file_on_redshift(sql_path, params=None, **kwargs):
         database=os.getenv("DB_NAME"),
         user=os.getenv("DB_USER"),
         password=os.getenv("DB_PASSWORD"),
-        port=5439
+        port=5439,
+        ssl=True,
     )
     print(sql)
 

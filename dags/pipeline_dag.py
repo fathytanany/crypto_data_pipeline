@@ -3,6 +3,9 @@ from airflow.operators.python import PythonOperator
 from datetime import datetime, timedelta
 import os
 import sys
+from airflow.providers.amazon.aws.operators.redshift_data import RedshiftDataOperator
+
+
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', ))
 from dotenv import load_dotenv
@@ -55,24 +58,34 @@ with DAG(
         op_kwargs={"ts": "{{ ti.xcom_pull(task_ids='get_timestamp') }}"},
     )
 
-    create_table = PythonOperator(
+    create_table_task = RedshiftDataOperator(
         task_id="create_redshift_table",
-        python_callable=run_sql_file_on_redshift,
-        op_kwargs={"sql_path": "utils/redshift_sql/create_table.sql"},
+        sql=open("utils/redshift_sql/create_table.sql").read(),
+        database=os.getenv("DB_NAME"),
+        workgroup_name="default-workgroup",
+        region=os.getenv("AWS_REGION"),
+        aws_conn_id = 'redshift_1',
+        # redshift_conn_id="redshift_default",
+        poll_interval=10,
+        wait_for_completion=True,
     )
 
-    copy_to_redshift = PythonOperator(
+    copy_to_redshift = RedshiftDataOperator(
         task_id="copy_data_to_redshift",
-        python_callable=run_sql_file_on_redshift,
-        op_kwargs={
-            "sql_path": "utils/redshift_sql/copy_to_table.sql",
-            "params": {
-                "bucket": os.getenv("S3_BUCKET"),
-                "region": os.getenv("AWS_REGION"),
-                "timestamp": "{{ ti.xcom_pull(task_ids='get_timestamp') }}",
-                "iam_role": os.getenv("REDSHIFT_IAM_ROLE"),
-            },
-        },
+        sql=open("utils/redshift_sql/copy_to_table.sql").read().format(
+            s3_path="s3://{bucket}/{{{{ ti.xcom_pull(task_ids='store_transformed_to_s3', key='transformed_key') }}}}".format(
+                bucket=os.getenv("S3_BUCKET")
+            ),
+            region=os.getenv("AWS_REGION"),
+            timestamp="{{ ti.xcom_pull(task_ids='get_timestamp') }}",
+            iam_role=os.getenv("REDSHIFT_IAM_ROLE"),
+        ),
+        database=os.getenv("DB_NAME"),
+        workgroup_name="default-workgroup",
+        region=os.getenv("AWS_REGION"),
+        aws_conn_id='redshift_1',
+        poll_interval=10,
+        wait_for_completion=True,
     )
 
-    get_ts >> fetch >> store >> transform >> store_transformed >> create_table >> copy_to_redshift
+    get_ts >> fetch >> store >> transform >> store_transformed >> create_table_task >> copy_to_redshift
