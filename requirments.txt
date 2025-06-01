@@ -3,3 +3,4 @@ boto3
 pandas
 redshift-connector
 requests
+apache-airflow-providers-amazon

@@ -43,6 +43,7 @@ services:
       - ./dags:/opt/airflow/dags
       - ./scripts:/opt/airflow/scripts
       - ./logs:/opt/airflow/logs 
+      - ./utils:/opt/airflow/utils
     command: scheduler
 
 volumes:
